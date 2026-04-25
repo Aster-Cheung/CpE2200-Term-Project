@@ -53,7 +53,7 @@ Scenarios:
 - Gabriel Satterfield, classmate who introduced Cursor AI to help me understand more about UART
 - STMicroelectronics Community
 - STM32 UART Getting Started Guide https://wiki.st.com/stm32mcu/wiki/Getting_started_with_UART
-- Tutorials of UART functions https://github.com/dekuNukem/STM32_tutorials/tree/master
+- Tutorials of UART functions https://github.com/dekuNukem/STM32_tutorials/tree/master or https://github.com/dekuNukem/STM32_tutorials/blob/master/lesson1_serial_helloworld/HAL_UART_Transmit_details.md
 
 
 ## Resources
