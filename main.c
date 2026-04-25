@@ -506,7 +506,7 @@ int main(void)
                char c = rx_buff[0];
                dataAvail = 0;
 
-               // convert to lowercase (optional but smart)
+               // convert to lowercase
                if (c >= 'A' && c <= 'Z')
                    c = c + 32;
 
