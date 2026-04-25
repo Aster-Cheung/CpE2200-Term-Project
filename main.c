@@ -24,6 +24,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <string.h>
+#include <stdio.h>  // for sprintf
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -66,11 +68,43 @@ static void MX_DMA_Init(void);
 /* USER CODE BEGIN 0 */
 volatile uint8_t dataAvail = 0;
 char rx_buff[8];
-uint8_t Welcome[] = "Welcome to my game! Please enter play (p) or exit (x) \r\n"; //Data to send
-uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
-uint8_t Win[] = "You win! \r\n"; //Data to send
-uint8_t NotCorrect[] = "Sorry...try again! \r\n"; //Data to send
-uint8_t Game[] = "What is 1+1? \r\n"; //Data to send
+
+#define NUM_EASY_PUZZLES 5
+#define NUM_HARD_PUZZLES 5
+
+char *easyQuestions[NUM_EASY_PUZZLES] = {
+    "What letter comes after C?\r\n",
+    "What cleans best?\r\nA) Spoon B) Mop C) Pillow\r\n",
+    "What color is the sky?\r\nA) Blue B) Green C) Red\r\n",
+    "Press 'y' to continue\r\n",
+    "What is 2+2?\r\n"
+};
+
+char easyAnswers[NUM_EASY_PUZZLES] = {
+    'd',
+    'b',
+    'a',
+    'y',
+    '4'
+};
+
+char *hardQuestions[NUM_HARD_PUZZLES] = {
+    "What is 12 * 3?\r\n",
+    "What comes before 'm'?\r\n",
+    "Solve: 15 - 7 = ?\r\n",
+    "Which is heavier?\r\nA) Rock B) Feather C) Paper\r\n",
+    "Press 'h' to continue\r\n"
+};
+
+char hardAnswers[NUM_HARD_PUZZLES] = {
+    '3',   // 36 → last digit trick (or accept '3' for simplicity)
+    'l',
+    '8',
+    'a',
+    'h'
+};
+
+uint8_t currentPuzzle = 0;
 
 #define INVENTORY_SIZE 10
    char inventory[INVENTORY_SIZE][20];
@@ -95,10 +129,87 @@ uint8_t Game[] = "What is 1+1? \r\n"; //Data to send
        {"", "", ""},
    };
 
+   typedef struct {
+       char *name;
+       char *art;
+   } Item;
+
+
+   char broomArt[] =
+   "   |\r\n"
+   "   |\r\n"
+   "   |\r\n"
+   "=======\r\n"
+   "|||||||\r\n"
+   "|||||||\r\n\r\n";
+
+   char spongeArt[] =
+   " .----.\r\n"
+   "/ SPG \\\r\n"
+   "\\____/\r\n\r\n";
+
+   char mopArt[] =
+   "    ||\r\n"
+   "    ||\r\n"
+   "    ||\r\n"
+   "   ==== \r\n"
+   "  /____\\\r\n";
+
+   char glovesArt[] =
+   "  ____________\r\n"
+   " |  GLOVES    |\r\n"
+   " |------------|\r\n"
+   " |  [ ][ ]    |\r\n"
+   " |  [ ][ ]    |\r\n"
+   " |____________|\r\n";
+
+   char BugsprayArt[] =
+   "    _______\r\n"
+   "   |       |\r\n"
+   "   | SPRAY |\r\n"
+   "   |_______|\r\n"
+   "      ||\r\n"
+   "      ||\r\n"
+   "     /__\\\r\n"
+   "    (____)\r\n";
+
+   char mouseArt[] =
+   "   ___________\r\n"
+   "  |  MOUSE   |\r\n"
+   "  |   TRAP   |\r\n"
+   "  |__________|\r\n"
+   "     ||  ||\r\n"
+   "     ||  ||\r\n"
+   "   __||__||__\r\n"
+   "  /  SNAP!!  \\\r\n";
+
+   char trashbagArt[] =
+       "     ____\r\n"
+       "   /      \\\r\n"
+       "  /  TRASH  \\\r\n"
+       " |    BAG    |\r\n"
+       " |            |\r\n"
+       "  \\  ____   /\r\n"
+       "   \\______/ \r\n";
+
+   Item items[] = {
+          {"Broom", broomArt},
+          {"Sponge", spongeArt},
+		  {"Mop", mopArt},
+		  {"A pack of gloves", glovesArt},
+		  {"Bug Spray", BugsprayArt},
+		  {"Mouse Trap", mouseArt},
+		  {"Trash Bag", trashbagArt}
+      };
+
    /* GAME VARIABLES */
    uint8_t difficulty = 0;
    uint8_t currentRoom = 0;
    uint8_t cleanedRooms = 0;
+   uint32_t puzzleStartTime = 0;
+   uint32_t timeLimit = 0;
+   uint32_t lastTimerPrint = 0;
+   uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
 
    uint8_t roomItemCount[6] = {
        1, 1, 2, 1, 2, 1
@@ -111,6 +222,7 @@ uint8_t Game[] = "What is 1+1? \r\n"; //Data to send
        STATE_MENU,
        STATE_EXPLORE,
        STATE_ROOM,
+	   STATE_ACTION,
        STATE_PUZZLE,
        STATE_CLEAN,
        STATE_COMPLETE,
@@ -137,6 +249,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+  srand(HAL_GetTick());
 
   /* USER CODE BEGIN Init */
 
@@ -228,19 +341,162 @@ int main(void)
                printed = 1;
            }
 
-           state = STATE_PUZZLE;
+           if (difficulty == 1) // EASY
+           {
+               currentPuzzle = rand() % NUM_EASY_PUZZLES;
+           }
+           else // HARD
+           {
+               currentPuzzle = rand() % NUM_HARD_PUZZLES;
+           }
+           state = STATE_ACTION;
            printed = 0;
            break;
+
+       case STATE_ACTION:
+    	   if (!printed)
+    	   {
+    		   char msg[100];
+
+    		   sprintf(msg,
+    				   "You are in %s\r\n"
+    				   "1. Grab item\r\n"
+    				   "2. Solve puzzle\r\n"
+    				   "3. Show map\r\n"
+    				   "4. Leave\r\n\r\n",
+					   roomName[currentRoom]);
+    		   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
+    		   printed = 1;
+    	   }
+
+    	   if (dataAvail)
+    	   {
+    		   char c = rx_buff[0];
+    		   dataAvail = 0;
+
+    		   if(c =='1')
+    		   {
+    			   //go grab
+    			   printed = 0;
+
+    			   //check if the room has item
+    			   if (strlen(roomItems[currentRoom][0]) > 0)
+    			   {
+    			       char *item = roomItems[currentRoom][0];
+
+    			       strcpy(inventory[inventoryCount], item);
+    			       inventoryCount++;
+
+    			       HAL_UART_Transmit(&huart2,
+    			           (uint8_t*)"Item grabbed: \r\n",
+    			           strlen("Item grabbed: \r\n"),
+    			           10);
+
+    			       HAL_UART_Transmit(&huart2,
+    			           (uint8_t*)item,
+    			           strlen(item),
+    			           10);
+
+    			       HAL_UART_Transmit(&huart2,
+    			           (uint8_t*)"\r\n\r\n",
+    			           4,
+    			           10);
+
+    			       printItemArt(item);
+    			       roomItems[currentRoom][0][0] = '\0';
+    			   }
+
+				   else
+				   {
+					   HAL_UART_Transmit(&huart2, (uint8_t*)"No item here!\r\n\r\n",strlen("No item here!\r\n\r\n"),10);
+				   }
+
+    		   }
+
+    		   else if(c =='2')
+    		   {
+    		       if (difficulty == 1) // Easy
+    		       {
+    		           currentPuzzle = rand() % NUM_EASY_PUZZLES;
+    		           timeLimit = 10000;   // 10 seconds
+    		       }
+    		       else // Hard
+    		       {
+    		           currentPuzzle = rand() % NUM_HARD_PUZZLES;
+    		           timeLimit = 5000;    // 5 seconds (harder)
+    		       }
+
+    		       puzzleStartTime = HAL_GetTick();
+    		       lastTimerPrint = 0;
+
+    		       state = STATE_PUZZLE;
+    		       printed = 0;
+    		   }
+    		   else if (c == '3')
+    		   {
+    		       printMap();
+    		       printed = 0;
+    		   }
+
+			   else if (c == '4')
+			   {
+				   state = STATE_EXPLORE;
+				   printed = 0;
+			   }
+
+
+    	   }break;
+
 
 
 
        case STATE_PUZZLE:
+    	   if (HAL_GetTick() - puzzleStartTime > timeLimit)
+    	   {
+    	       HAL_UART_Transmit(&huart2,
+    	           (uint8_t*)"Time's up! You lose!\r\n",
+    	           strlen("Time's up! You lose!\r\n"),
+    	           10);
+
+    	       state = STATE_GAME_OVER;
+    	       printed = 0;
+    	       break;
+    	   }
+
+    	   uint32_t now = HAL_GetTick();
+    	   uint32_t remaining = (timeLimit - (now - puzzleStartTime)) / 1000;
+
+    	   // print once per second
+    	   if (now - lastTimerPrint >= 1000)
+    	   {
+    	       char msg[50];
+    	       sprintf(msg, "Time left: %lu sec\r\n", remaining);
+
+    	       HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
+
+    	       lastTimerPrint = now;
+    	   }
+
            if (!printed)
            {
-               HAL_UART_Transmit(&huart2,
-                   (uint8_t*)"Solve: What is 2+2?\r\n",
-                   strlen("Solve: What is 2+2?\r\n"),
-                   10);
+        	   char timerMsg[50];
+        	   sprintf(timerMsg, "You have %lu seconds!\r\n", timeLimit / 1000);
+        	   HAL_UART_Transmit(&huart2, (uint8_t*)timerMsg, strlen(timerMsg), 10);
+
+        	   if (difficulty == 1)
+        	   {
+        	       HAL_UART_Transmit(&huart2,
+        	           (uint8_t*)easyQuestions[currentPuzzle],
+        	           strlen(easyQuestions[currentPuzzle]),
+        	           10);
+        	   }
+        	   else
+        	   {
+        	       HAL_UART_Transmit(&huart2,
+        	           (uint8_t*)hardQuestions[currentPuzzle],
+        	           strlen(hardQuestions[currentPuzzle]),
+        	           10);
+        	   }
                printed = 1;
            }
 
@@ -249,20 +505,29 @@ int main(void)
                char c = rx_buff[0];
                dataAvail = 0;
 
-               if (c < '0' || c > '9')
-                   break;
+               // convert to lowercase (optional but smart)
+               if (c >= 'A' && c <= 'Z')
+                   c = c + 32;
 
-               if (c == '4')
+               char correctAnswer;
+
+               if (difficulty == 1)
+                   correctAnswer = easyAnswers[currentPuzzle];
+               else
+                   correctAnswer = hardAnswers[currentPuzzle];
+
+               if (c == correctAnswer)
                {
-                   state = STATE_CLEAN;
+                   HAL_UART_Transmit(&huart2,
+                       (uint8_t*)"Correct!\r\n\r\n", 10, 10);
+
+                   state = STATE_CLEAN;   // or next state
                    printed = 0;
                }
                else
                {
                    HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Wrong!\r\n",
-                       strlen("Wrong!\r\n"),
-                       10);
+                       (uint8_t*)"Wrong!\r\n", strlen("Wrong!\r\n"), 10);
                }
            }
            break;
@@ -291,10 +556,15 @@ int main(void)
            break;
 
        case STATE_GAME_OVER:
-           HAL_UART_Transmit(&huart2,
-               (uint8_t*)"YOU WIN!\r\n",
-               strlen("YOU WIN!\r\n"),
-               10);
+
+    	   if (HAL_GetTick() - puzzleStartTime < timeLimit)
+    	       	   {
+    	       	       HAL_UART_Transmit(&huart2,
+    	       	           (uint8_t*)"YOU WIN!\r\n",
+    	       	           strlen("YOU WIN!\r\n"),
+    	       	           10);
+
+    	       	   }
 
            while (1);
            break;
@@ -303,17 +573,20 @@ int main(void)
        HAL_UART_Receive_IT(&huart2, rx_buff, 1);
    }
 
- /* Game engine END WHILE */
 
-  // Game over
-  HAL_UART_Transmit(&huart2,Goodbye,sizeof(Goodbye),10);
-  while(1);
+  /* Game engine END WHILE */
+
+   // Game over
+   while(1);
 }
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
+
+
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -453,6 +726,88 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   HAL_UART_Receive_IT(&huart2, rx_buff, 1); //You need to toggle a breakpoint on this line!
   dataAvail=1;
+}
+
+/* USER CODE BEGIN 4 */
+
+void printMap(void)
+{
+    char msg[200];
+
+    HAL_UART_Transmit(&huart2,
+        (uint8_t*)"====== MAP ======\r\n",
+        strlen("====== MAP ======\r\n"),
+        100);
+
+    // Player position
+    sprintf(msg, "@ YOU → %s\r\n\r\n", roomName[currentRoom]);
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+
+    for (int i = 0; i < 6; i++)
+    {
+        sprintf(msg, "%s", roomName[i]);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+
+        if (i == currentRoom)
+        {
+            HAL_UART_Transmit(&huart2, (uint8_t*)" [@]", 6, 100);
+        }
+
+        if (roomItemCount[i] > 0)
+        {
+            HAL_UART_Transmit(&huart2, (uint8_t*)" [", 2, 100);
+
+            int first = 1;
+
+            for (int j = 0; j < 3; j++)
+            {
+                if (strlen(roomItems[i][j]) > 0)
+                {
+                    if (!first)
+                        HAL_UART_Transmit(&huart2, (uint8_t*)" ", 1, 100);
+
+                    HAL_UART_Transmit(&huart2,
+                        (uint8_t*)roomItems[i][j],
+                        strlen(roomItems[i][j]),
+                        100);
+
+                    HAL_UART_Transmit(&huart2, (uint8_t*)"*", 1, 100);
+
+                    first = 0;
+                }
+            }
+
+            HAL_UART_Transmit(&huart2, (uint8_t*)"]", 1, 100);
+        }
+        else
+        {
+            HAL_UART_Transmit(&huart2, (uint8_t*)" []", 3, 100);
+        }
+
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 100);
+    }
+
+    HAL_UART_Transmit(&huart2,
+        (uint8_t*)"\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n",
+        strlen("\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n"),
+        100);
+}
+
+/* USER CODE END 4 */
+
+void printItemArt(char *itemName)
+{
+    for (int i = 0; i < 2; i++)
+    {
+        if (strcmp(items[i].name, itemName) == 0)
+        {
+            HAL_UART_Transmit(&huart2,
+                (uint8_t*)items[i].art,
+                strlen(items[i].art),
+                100);
+            return;
+        }
+    }
 }
 /* USER CODE END 4 */
 
