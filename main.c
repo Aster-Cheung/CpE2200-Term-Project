@@ -159,6 +159,15 @@ uint8_t currentPuzzle = 0;
        {"", "", ""},
    };
 
+   char roomItemsInit[6][3][20] = {
+       {"", "", ""},
+       {"Broom", "", ""},
+       {"Sponge", "Gloves", ""},
+       {"Mop", "", ""},
+       {"Mouse Trap", "Bug Spray", "Trash Bag"},
+       {"", "", ""},
+   };
+
    typedef struct {
        char *name;
        char *art;
@@ -490,7 +499,7 @@ int main(void)
 
         	   HAL_UART_Transmit(&huart2, (uint8_t*)playerName, strlen(playerName), 10);
         	   sprintf(msg,
-        	       "You entered the %s...\r\n%s\r\n\r\n",
+        	       ", You entered the %s...\r\n%s\r\n\r\n",
         	       roomName[currentRoom],
         	       roomMess[currentRoom]);
 
@@ -525,8 +534,10 @@ int main(void)
     	   {
     		   char msg[100];
 
+    		   HAL_UART_Transmit(&huart2, (uint8_t*)playerName, strlen(playerName), 10);
+
     		   sprintf(msg,
-    		       "You are in %s\r\n"
+    		       ", You are in %s\r\n"
     		       "1. Grab item\r\n"
     		       "2. Clean room (use item first)\r\n"
     		       "3. Show map\r\n"
@@ -853,10 +864,10 @@ int main(void)
                            4,
                            100);
 
-                       hintNPCUsed = 1;  // 🔒 permanently used
+                       hintNPCUsed = 1;
                    }
 
-                   break; // ⛔ IMPORTANT: don't process as answer
+                   break;
                }
 
                if (difficulty == 1)
@@ -936,7 +947,7 @@ int main(void)
 
                if (c == 'p')
                {
-                   resetGame();   // 🔁 restart everything
+                   resetGame();
                }
                else if (c == 'q')
                {
@@ -1231,15 +1242,41 @@ void resetGame(void)
     cleanedRooms = 0;
     currentRoom = 0;
 
+    difficulty = 0;
+    hintNPCUsed = 0;
+    currentPuzzle = 0;
+    puzzleStartTime = 0;
+    timeLimit = 0;
+    lastTimerPrint = 0;
+
+    printed = 0;
+    nameEntered = 0;
+    nameIndex = 0;
+    memset(playerName, 0, sizeof(playerName));
+
+    // reset rooms cleaned
     for (int i = 0; i < 6; i++)
     {
         roomsClean[i] = 0;
+        roomItemCount[i] = 0;
     }
 
-    // (optional) reset items if needed
+    // restore room items
+    memcpy(roomItems, roomItemsInit, sizeof(roomItemsInit));
+    roomItemCount[0] = 0;
+       roomItemCount[1] = 1;
+       roomItemCount[2] = 2;
+       roomItemCount[3] = 1;
+       roomItemCount[4] = 3;
+       roomItemCount[5] = 0;
 
-    state = STATE_MENU;
-    printed = 0;
+    // clear inventory strings
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        inventory[i][0] = '\0';
+    }
+
+    state = STATE_MAIN_MENU;
 }
 
 /* USER CODE END 4 */
