@@ -10,16 +10,21 @@
 - Build speed, focus, and efficiency through gameplay  
 - Develop habits that help reduce procrastination in real-life tasks
 
-## Discussions
--
--
--
-
 ## Demonstrations
 - Software: STEM 32 System Work Bench and PUTTY
 Scenarios:
 <img width="1964" height="550" alt="image" src="https://github.com/user-attachments/assets/b0360fc5-c137-4ea9-ba42-b7205e6ac933" />
 
+## Flow Chart
+- 
+
+## State Diagram
+<img width="1736" height="895" alt="image" src="https://github.com/user-attachments/assets/ff2a65b2-8e86-4440-b644-04f7b0c46107" />
+
+## Discussions
+-
+-
+-
 
 ## Conclusions
 ### Key Takeaways 
