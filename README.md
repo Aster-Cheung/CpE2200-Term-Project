@@ -18,7 +18,8 @@
 ## Demonstrations
 - Software: STEM 32 System Work Bench and PUTTY
 Scenarios:
-<img width="1365" height="207" alt="image" src="https://github.com/user-attachments/assets/ddda82a6-0697-4fde-811d-6c00e802a08b" />
+<img width="1964" height="550" alt="image" src="https://github.com/user-attachments/assets/b0360fc5-c137-4ea9-ba42-b7205e6ac933" />
+
 
 ## Conclusions
 ### Key Takeaways 
