@@ -17,9 +17,17 @@
 
 
 ## Conclusions
--
--
--
+### Key Takeaways 
+- Learned GitHub workflow: branches, pull requests, and merging
+- Gained understanding of UART communication in embedded systems
+- Improved use of state machines and input handling
+
+### Future Directions 
+- Add a global timer and scoring system that calculates based on the global timer
+- Expand NPC interactions and gameplay depth
+- Add more than one NPC
+- Increase puzzle/question bank for replayability
+- Add real-world scenario-based challenges
 
 ## Acknowledgements
 - Class professor, Dr. Chin Craig from Kennesaw State University, Marietta, GA
