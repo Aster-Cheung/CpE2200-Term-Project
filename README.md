@@ -22,7 +22,7 @@
 -
 
 ## Acknowledgements
-- Class professor, Dr. Chin Grag from Kennesaw State University, Marietta, GA
+- Class professor, Dr. Chin Craig from Kennesaw State University, Marietta, GA
 - Gabriel Satterfield, classmate who introduced Cursor AI to help me understand more about UART
 - STMicroelectronics Community
 
