@@ -25,11 +25,11 @@ Scenarios:
 ## Discussions
 ### Limitations
 - The game only uses text (ASCII) in the UART terminal
-- Player cannot see typed input(no echo).
+- Player cannot see typed input(no echo)
 
 ### Challenges
 - Handle mixed input types (string input + single-character commands) 
-- Text based game, count down timers will block the entire game since it updates and prints out time left every lines.
+- Text based game, count down timers will block the entire game since it updates and prints out time left every lines
 
 ### Addresses
 - Change how a single key press is interpreted
