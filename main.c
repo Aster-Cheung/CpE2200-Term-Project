@@ -69,6 +69,11 @@ static void MX_DMA_Init(void);
 volatile uint8_t dataAvail = 0;
 char rx_buff[8];
 
+//store name
+ char playerName[20] = {0};
+ uint8_t nameIndex = 0;
+ uint8_t nameEntered = 0;
+
 #define NUM_EASY_PUZZLES 5
 #define NUM_HARD_PUZZLES 5
 
@@ -238,6 +243,7 @@ uint8_t currentPuzzle = 0;
 
    char selectedItem[20];
 
+
 #define HINT_TIME_MS 3000
    uint8_t hintGiven = 0;
    /* GAME VARIABLES */
@@ -249,6 +255,8 @@ uint8_t currentPuzzle = 0;
    uint32_t timeLimit = 0;
    uint32_t lastTimerPrint = 0;
    uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
+
+
 
    uint8_t roomItemCount[6] = {
        0, 1, 2, 1, 3, 0
@@ -268,6 +276,7 @@ uint8_t currentPuzzle = 0;
    typedef enum {
 	   STATE_MAIN_MENU,
        STATE_MENU,
+	   STATE_NAME,
        STATE_EXPLORE,
        STATE_ROOM,
 	   STATE_ACTION,
@@ -376,29 +385,60 @@ int main(void)
 
                if (c == '1' || c == '2')
                {
-            	   char msg[] = "Let's Start, good luck!\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-					HAL_Delay(1000);
+            	   // Ask for the player's name
 
-					char msg3[] = "3....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg3, strlen(msg3), 10);
-					HAL_Delay(1000);
+				   difficulty = c - '0';
 
-					char msg2[] = "2....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg2, strlen(msg2), 10);
-					HAL_Delay(1000);
+				   nameIndex = 0;
+				   nameEntered = 0;
+				   memset(playerName, 0, sizeof(playerName));
 
-					char msg1[] = "1....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg1, strlen(msg1), 10);
-					HAL_Delay(1000);
+				   HAL_UART_Transmit(&huart2,
+					   (uint8_t*)"Enter your name and press ENTER:\r\n",
+					   strlen("Enter your name and press ENTER:\r\n"),
+					   10);
 
+				   state = STATE_NAME;
+				   printed = 0;
 
-                   difficulty = c - '0';
-                   state = STATE_EXPLORE;
-                   printed = 0;
+            	   if (nameEntered)
+            	   {
+            	       char welcome[100];
+            	       sprintf(welcome, "Welcome, %s!\r\n", playerName);
+            	       HAL_UART_Transmit(&huart2, (uint8_t*)welcome, strlen(welcome), 10);
+            	   }
+
                }
            }
 
+           break;
+
+       case STATE_NAME:
+           if (nameEntered)
+           {
+               char welcome[100];
+               sprintf(welcome, "Welcome, %s!\r\n", playerName);
+               HAL_UART_Transmit(&huart2, (uint8_t*)welcome, strlen(welcome), 10);
+
+               char msg[] = "Let's Start, good luck!\r\n\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
+				HAL_Delay(1000);
+
+				char msg3[] = "3....\r\n\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)msg3, strlen(msg3), 10);
+				HAL_Delay(1000);
+
+				char msg2[] = "2....\r\n\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)msg2, strlen(msg2), 10);
+				HAL_Delay(1000);
+
+				char msg1[] = "1....\r\n\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)msg1, strlen(msg1), 10);
+				HAL_Delay(1000);
+
+				 state = STATE_EXPLORE;
+				 printed = 0;
+           }
            break;
 
        case STATE_EXPLORE:
@@ -448,6 +488,7 @@ int main(void)
            {
         	   char msg[200];
 
+        	   HAL_UART_Transmit(&huart2, (uint8_t*)playerName, strlen(playerName), 10);
         	   sprintf(msg,
         	       "You entered the %s...\r\n%s\r\n\r\n",
         	       roomName[currentRoom],
@@ -563,7 +604,6 @@ int main(void)
     	       }
     	       else if (c == '2')
     	       {
-    	           // Remind it is already cleaned if already cleaned
     	           if (roomsClean[currentRoom] == 1)
     	           {
     	               HAL_UART_Transmit(&huart2,
@@ -911,7 +951,6 @@ int main(void)
            break;
        }
 
-       HAL_UART_Receive_IT(&huart2, rx_buff, 1);
    }
 
 
@@ -1065,8 +1104,28 @@ static void MX_GPIO_Init(void)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  HAL_UART_Receive_IT(&huart2, rx_buff, 1); //You need to toggle a breakpoint on this line!
-  dataAvail=1;
+    if (huart->Instance == USART2)
+    {
+        char c = rx_buff[0];
+
+        // handle name input only when in name mode
+        if (!nameEntered)
+        {
+            if (c == '\r' || c == '\n')
+            {
+                playerName[nameIndex] = '\0';
+                nameEntered = 1;
+            }
+            else if (nameIndex < sizeof(playerName) - 1)
+            {
+                playerName[nameIndex++] = c;
+            }
+        }
+
+        dataAvail = 1;
+
+        HAL_UART_Receive_IT(&huart2, rx_buff, 1); // ONLY ONCE
+    }
 }
 
 /* USER CODE BEGIN 4 */
