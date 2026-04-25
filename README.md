@@ -1,14 +1,15 @@
 # Project Overview
 
 ## Purpose of the Game
-- Learn how to program using C and Assembly with a microcontroller  
-- Understand how to use boilerplate code to speed up development  
-- Improve interaction between the game system and the user  
+- Create a UART-driven interactive game combining logic puzzles with item-based gameplay using a microcontroller and serial communication
 
 ## Objectives
-- Practice completing in-game chores under time pressure  
-- Build speed, focus, and efficiency through gameplay  
-- Develop habits that help reduce procrastination in real-life tasks
+- Implement a state-machine-based game architecture in C and Assembly
+- Handle real-time user input via UART communication Design interactive gameplay with puzzles, inventory, and room exploration
+
+## Motivation
+- Practice completing in-game chores under time pressure 
+= Develop habits that help reduce procrastination in real life tasks 
 
 ## Demonstrations
 - Software: STEM 32 System Work Bench and PUTTY
@@ -22,9 +23,17 @@ Scenarios:
 <img width="1736" height="895" alt="image" src="https://github.com/user-attachments/assets/ff2a65b2-8e86-4440-b644-04f7b0c46107" />
 
 ## Discussions
--
--
--
+### Limitations
+- The game only uses text (ASCII) in the UART terminal
+- Player cannot see typed input(no echo).
+
+### Challenges
+- Handle mixed input types (string input + single-character commands) 
+- Text based game, count down timers will block the entire game since it updates and prints out time left every lines.
+
+### Addresses
+- Change how a single key press is interpreted
+
 
 ## Conclusions
 ### Key Takeaways 
@@ -43,8 +52,9 @@ Scenarios:
 - Class professor, Dr. Chin Craig from Kennesaw State University, Marietta, GA
 - Gabriel Satterfield, classmate who introduced Cursor AI to help me understand more about UART
 - STMicroelectronics Community
-
-## Resources
 - STM32 UART Getting Started Guide https://wiki.st.com/stm32mcu/wiki/Getting_started_with_UART
 - Tutorials of UART functions https://github.com/dekuNukem/STM32_tutorials/tree/master
--
+
+
+## Resources
+- Feel free to check out the game for reference if you are taking this class
