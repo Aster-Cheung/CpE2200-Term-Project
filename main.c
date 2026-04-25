@@ -457,7 +457,6 @@ int main(void)
                printed = 1;
            }
 
-           // ✅ NEW: check if already cleaned
            if (roomsClean[currentRoom] == 1)
            {
                HAL_UART_Transmit(&huart2,
