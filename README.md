@@ -17,8 +17,8 @@ Scenarios:
 <img width="1964" height="550" alt="image" src="https://github.com/user-attachments/assets/b0360fc5-c137-4ea9-ba42-b7205e6ac933" />
 
 ## Screenshots
-- ASCII art image of Bug Spray (Pick up item)
-<img width="563" height="581" alt="image" src="https://github.com/user-attachments/assets/bcbeb774-b040-47dd-a345-df6244e7c235" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/74de9f60-7bf5-4258-9ff8-09c058dbc825" />
+
 
 
 ## Flow Chart
