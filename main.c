@@ -24,8 +24,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <string.h>
-#include <stdio.h>  // for sprintf
-
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -68,68 +66,11 @@ static void MX_DMA_Init(void);
 /* USER CODE BEGIN 0 */
 volatile uint8_t dataAvail = 0;
 char rx_buff[8];
-
-#define NUM_EASY_PUZZLES 5
-#define NUM_HARD_PUZZLES 5
-
-char *easyQuestions[NUM_EASY_PUZZLES] = {
-    "What letter comes after C?\r\n",
-    "What cleans best?\r\nA) Spoon B) Mop C) Pillow\r\n",
-    "What color is the sky?\r\nA) Blue B) Green C) Red\r\n",
-    "Press 'y' to continue\r\n",
-    "What is 2+2?\r\n"
-};
-
-char easyAnswers[NUM_EASY_PUZZLES] = {
-    'd',
-    'b',
-    'a',
-    'y',
-    '4'
-};
-
-char *easyHints[NUM_EASY_PUZZLES] = {
-		"Think of the alphabet order or song...",
-		"Which item is used for cleaning floors?",
-		"Look up at the sky during the day, what color is that?",
-		"Just press y... that's not that hard...",
-		"Basic addition, use your fingers...2 fingers + 2 fingers..\r\nHow many fingers in total?"
-};
-
-char *hardQuestions[NUM_HARD_PUZZLES] = {
-    "What is 12 * 3?\r\n",
-    "What comes before 'm'?\r\n",
-    "Solve: 15 - 7 = ?\r\n",
-    "Which is heavier?\r\nA) Rock B) Feather C) Paper\r\n",
-    "Is Dr. Chin a... \r\n A) Professor B) A TA C) A student\r\n"
-};
-
-char hardAnswers[NUM_HARD_PUZZLES] = {
-    '3',   // 36 → last digit trick (or accept '3' for simplicity)
-    'l',
-    '8',
-    'a',
-    'h'
-};
-
-char *hardHints[NUM_HARD_PUZZLES] = {
-	"Add 12 three times... What do you get?",
-	"Alphabet position: m comes after 1",
-	"Break subtraction into chunks, or use your fingers.",
-	"Think weight logically, not visually, gravity does exist.",
-	"Where do you see Dr. Chin in lectures? What is he doing in class?"
-};
-
-char *roomMess[6] = {
-    "Dust and dirt everywhere on the floor.",
-    "The living room floor is covered in crumbs.",
-    "Greasy dishes and sticky spills in the kitchen.",
-    "Wet floor and soap everywhere in the bathroom.",
-    "There are mice running around in the garage!",
-    "Trash is scattered all over the hallway."
-};
-
-uint8_t currentPuzzle = 0;
+uint8_t Welcome[] = "Welcome to my game! Please enter play (p) or exit (x) \r\n"; //Data to send
+uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
+uint8_t Win[] = "You win! \r\n"; //Data to send
+uint8_t NotCorrect[] = "Sorry...try again! \r\n"; //Data to send
+uint8_t Game[] = "What is 1+1? \r\n"; //Data to send
 
 #define INVENTORY_SIZE 10
    char inventory[INVENTORY_SIZE][20];
@@ -154,131 +95,29 @@ uint8_t currentPuzzle = 0;
        {"", "", ""},
    };
 
-   typedef struct {
-       char *name;
-       char *art;
-   } Item;
-
-
-   char broomArt[] =
-   "   |\r\n"
-   "   |\r\n"
-   "   |\r\n"
-   "=======\r\n"
-   "|||||||\r\n"
-   "|||||||\r\n\r\n";
-
-   char spongeArt[] =
-   " .----.\r\n"
-   "/ SPG \\\r\n"
-   "\\____/\r\n\r\n";
-
-   char mopArt[] =
-   "    ||\r\n"
-   "    ||\r\n"
-   "    ||\r\n"
-   "   ==== \r\n"
-   "  /____\\\r\n";
-
-   char glovesArt[] =
-   "  ____________\r\n"
-   " |  GLOVES    |\r\n"
-   " |------------|\r\n"
-   " |  [ ][ ]    |\r\n"
-   " |  [ ][ ]    |\r\n"
-   " |____________|\r\n";
-
-   char BugsprayArt[] =
-   "    _______\r\n"
-   "   |       |\r\n"
-   "   | SPRAY |\r\n"
-   "   |_______|\r\n"
-   "      ||\r\n"
-   "      ||\r\n"
-   "     /__\\\r\n"
-   "    (____)\r\n";
-
-   char mouseArt[] =
-   "   ___________\r\n"
-   "  |  MOUSE   |\r\n"
-   "  |   TRAP   |\r\n"
-   "  |__________|\r\n"
-   "     ||  ||\r\n"
-   "     ||  ||\r\n"
-   "   __||__||__\r\n"
-   "  /  SNAP!!  \\\r\n";
-
-   char trashbagArt[] =
-       "     ____\r\n"
-       "   /      \\\r\n"
-       "  /  TRASH  \\\r\n"
-       " |    BAG    |\r\n"
-       " |            |\r\n"
-       "  \\  ____   /\r\n"
-       "   \\______/ \r\n";
-
-   Item items[] = {
-          {"Broom", broomArt},
-          {"Sponge", spongeArt},
-		  {"Mop", mopArt},
-		  {"Gloves", glovesArt},
-		  {"Bug Spray", BugsprayArt},
-		  {"Mouse Trap", mouseArt},
-		  {"Trash Bag", trashbagArt}
-      };
-
-   char *requiredItem[6] = {
-       "Broom",       // Master Bedroom
-       "Broom",       // Living Room
-       "Sponge",      // Kitchen
-       "Mop",         // Bathroom
-       "Mouse Trap",  // Garage
-       "Trash Bag"    // Hallway
-   };
-
-   char selectedItem[20];
-
-#define HINT_TIME_MS 3000
-   uint8_t hintGiven = 0;
    /* GAME VARIABLES */
    uint8_t difficulty = 0;
    uint8_t currentRoom = 0;
    uint8_t cleanedRooms = 0;
-   uint8_t hintNPCUsed = 0;
-   uint32_t puzzleStartTime = 0;
-   uint32_t timeLimit = 0;
-   uint32_t lastTimerPrint = 0;
-   uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
 
    uint8_t roomItemCount[6] = {
-       0, 1, 2, 1, 3, 0
+       1, 1, 2, 1, 2, 1
    };
 
    uint8_t roomsClean[6] = {0};
 
-   char winBanner[] =
-   "██╗   ██╗ ██████╗ ██╗   ██╗    ██╗    ██╗██╗███╗   ██╗██╗██╗\r\n"
-   "╚██╗ ██╔╝██╔═══██╗██║   ██║    ██║    ██║██║████╗  ██║██║██║\r\n"
-   " ╚████╔╝ ██║   ██║██║   ██║    ██║ █╗ ██║██║██╔██╗ ██║██║██║\r\n"
-   "  ╚██╔╝  ██║   ██║██║   ██║    ██║███╗██║██║██║╚██╗██║╚═╝╚═╝\r\n"
-   "   ██║   ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║██╗██╗\r\n"
-   "   ╚═╝    ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═╝╚═╝\r\n";
-
    /* STATES */
    typedef enum {
-	   STATE_MAIN_MENU,
        STATE_MENU,
        STATE_EXPLORE,
        STATE_ROOM,
-	   STATE_ACTION,
-	   STATE_USE_ITEM,
        STATE_PUZZLE,
        STATE_CLEAN,
        STATE_COMPLETE,
        STATE_GAME_OVER
    } GameState;
 
-   GameState state = STATE_MAIN_MENU;
+   GameState state = STATE_MENU;
    uint8_t printed = 0;
 
 
@@ -298,7 +137,6 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  srand(HAL_GetTick());
 
   /* USER CODE BEGIN Init */
 
@@ -328,39 +166,6 @@ int main(void)
    {
        switch (state)
        {
-       case STATE_MAIN_MENU:
-           if (!printed)
-           {
-               char msg[] =
-                   "===== MAIN MENU =====\r\n"
-                   "1. Start Game\r\n"
-                   "2. Quit\r\n\r\n";
-
-               HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-               printed = 1;
-           }
-
-           if (dataAvail)
-           {
-               char c = rx_buff[0];
-               dataAvail = 0;
-
-               if (c == '1')
-               {
-                   state = STATE_MENU; // difficulty
-                   printed = 0;
-               }
-               else if (c == '2')
-               {
-                   HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Goodbye!\r\n",
-                       strlen("Goodbye!\r\n"),
-                       10);
-                   while (1);
-               }
-           }
-           break;
-
        case STATE_MENU:
            if (!printed)
            {
@@ -376,23 +181,6 @@ int main(void)
 
                if (c == '1' || c == '2')
                {
-            	   char msg[] = "Let's Start, good luck!\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-					HAL_Delay(1000);
-
-					char msg3[] = "3....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg3, strlen(msg3), 10);
-					HAL_Delay(1000);
-
-					char msg2[] = "2....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg2, strlen(msg2), 10);
-					HAL_Delay(1000);
-
-					char msg1[] = "1....\r\n\r\n";
-					HAL_UART_Transmit(&huart2, (uint8_t*)msg1, strlen(msg1), 10);
-					HAL_Delay(1000);
-
-
                    difficulty = c - '0';
                    state = STATE_EXPLORE;
                    printed = 0;
@@ -411,12 +199,9 @@ int main(void)
                    "3.Kitchen\r\n"
                    "4.Bathroom\r\n"
                    "5.Garage\r\n"
-                   "6.Hallway\r\n"
-                   "7.Show Map\r\n\r\n";
+                   "6.Hallway\r\n\r\n";
 
                HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-
-
                printed = 1;
            }
 
@@ -424,12 +209,6 @@ int main(void)
            {
                char c = rx_buff[0];
                dataAvail = 0;
-
-               if (c == '7')
-               {
-                   printMap();
-                   state = STATE_EXPLORE;
-               }
 
                if (c >= '1' && c <= '6')
                {
@@ -442,321 +221,26 @@ int main(void)
            break;
 
        case STATE_ROOM:
-    	   puzzleStartTime = HAL_GetTick();
-
            if (!printed)
            {
-        	   char msg[200];
-
-        	   sprintf(msg,
-        	       "You entered the %s...\r\n%s\r\n\r\n",
-        	       roomName[currentRoom],
-        	       roomMess[currentRoom]);
-
-        	   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
+               char msg[] = "You entered a room...\r\n";
+               HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
                printed = 1;
            }
 
-           // ✅ NEW: check if already cleaned
-           if (roomsClean[currentRoom] == 1)
-           {
-               HAL_UART_Transmit(&huart2,
-                   (uint8_t*)"This room is already cleaned! Nothing more to do here. \r\nAre you obsessed with cleaning rooms?\r\n\r\n",
-                   strlen("This room is already cleaned! Nothing more to do here. \r\nAre you obsessed with cleaning rooms?\r\n\r\n"),
-                   10);
-
-               state = STATE_ACTION;   // skip puzzle
-               printed = 0;
-           }
-           else
-           {
-               if (difficulty == 1)
-                   currentPuzzle = rand() % NUM_EASY_PUZZLES;
-               else
-                   currentPuzzle = rand() % NUM_HARD_PUZZLES;
-
-               state = STATE_ACTION;
-               printed = 0;
-           }
+           state = STATE_PUZZLE;
+           printed = 0;
            break;
 
-       case STATE_ACTION:
-    	   if (!printed)
-    	   {
-    		   char msg[100];
 
-    		   sprintf(msg,
-    		       "You are in %s\r\n"
-    		       "1. Grab item\r\n"
-    		       "2. Clean room (use item first)\r\n"
-    		       "3. Show map\r\n"
-    		       "4. Leave\r\n\r\n",
-    		       roomName[currentRoom]);
-
-    		   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-
-    		   printed = 1;
-    	   }
-
-    	   if (dataAvail)
-    	   {
-    	       char c = rx_buff[0];
-    	       dataAvail = 0;
-
-    	       if (c == '1')
-    	       {
-    	           printed = 0;
-
-    	           if (roomItemCount[currentRoom] > 0)
-    	           {
-    	               for (int i = 0; i < 3; i++)
-    	               {
-    	                   if (roomItems[currentRoom][i][0] != '\0')
-    	                   {
-    	                       char *item = roomItems[currentRoom][i];
-
-    	                       if (inventoryCount < INVENTORY_SIZE)
-    	                       {
-    	                           strcpy(inventory[inventoryCount], item);
-    	                           inventoryCount++;
-    	                       }
-
-    	                       HAL_UART_Transmit(&huart2,
-    	                           (uint8_t*)"Item grabbed: \r\n",
-    	                           strlen("Item grabbed: \r\n"),
-    	                           10);
-
-    	                       HAL_UART_Transmit(&huart2,
-    	                           (uint8_t*)item,
-    	                           strlen(item),
-    	                           10);
-
-    	                       HAL_UART_Transmit(&huart2,
-    	                           (uint8_t*)"\r\n\r\n",
-    	                           4,
-    	                           10);
-
-    	                       printItemArt(item);
-
-    	                       roomItems[currentRoom][i][0] = '\0';
-    	                       roomItemCount[currentRoom]--;
-
-    	                       // compact shift
-    	                       for (int j = i; j < 2; j++)
-    	                       {
-    	                           strcpy(roomItems[currentRoom][j],
-    	                                  roomItems[currentRoom][j + 1]);
-    	                       }
-
-    	                       roomItems[currentRoom][2][0] = '\0';
-
-    	                       break;
-    	                   }
-    	               }
-    	           }
-    	           else
-    	           {
-    	               HAL_UART_Transmit(&huart2,
-    	                   (uint8_t*)"No item here! Are you grabbing air?\r\n\r\n",
-    	                   strlen("No item here! Are you grabbing air?\r\n\r\n"),
-    	                   10);
-    	           }
-    	       }
-    	       else if (c == '2')
-    	       {
-    	           // ✅ BLOCK if already cleaned
-    	           if (roomsClean[currentRoom] == 1)
-    	           {
-    	               HAL_UART_Transmit(&huart2,
-    	                   (uint8_t*)"This room is already cleaned!\r\n\r\n",
-    	                   strlen("This room is already cleaned!\r\n\r\n"),
-    	                   10);
-
-    	               printed = 0;   // show menu again
-    	               break;
-    	           }
-
-    	           // normal flow
-    	           if (difficulty == 1)
-    	               currentPuzzle = rand() % NUM_EASY_PUZZLES;
-    	           else
-    	               currentPuzzle = rand() % NUM_HARD_PUZZLES;
-
-    	           timeLimit = (difficulty == 1) ? 10000 : 5000;
-
-    	           puzzleStartTime = HAL_GetTick();
-    	           lastTimerPrint = 0;
-
-    	           state = STATE_USE_ITEM;
-    	           printed = 0;
-    	       }
-    	       else if (c == '3')
-    	       {
-    	           printMap();
-    	           printed = 0;
-    	       }
-    	       else if (c == '4')
-    	       {
-    	           state = STATE_EXPLORE;
-    	           printed = 0;
-    	       }
-
-
-    	   }break;
-       case STATE_USE_ITEM:
-
-           if (!printed)
-           {
-               showInventory();
-
-               if (inventoryCount == 0)
-               {
-                   HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"No items to use!\r\n\r\n",
-                       strlen("No items to use!\r\n\r\n"),
-                       10);
-
-                   state = STATE_ACTION;
-                   break;
-               }
-
-               HAL_UART_Transmit(&huart2,
-                   (uint8_t*)"Choose item number to use (or 0 to go back):\r\n",
-                   strlen("Choose item number to use (or 0 to go back):\r\n"),
-                   10);
-
-               for (int i = 0; i < inventoryCount; i++)
-               {
-                   char msg[50];
-                   sprintf(msg, "%d. %s\r\n", i + 1, inventory[i]);
-                   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-               }
-
-               HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 10);
-
-               printed = 1;
-           }
-
-           if (dataAvail)
-           {
-               char c = rx_buff[0];
-               dataAvail = 0;
-
-               // Go back
-               if (c == '0')
-               {
-                   state = STATE_ACTION;
-                   printed = 0;
-                   break;
-               }
-
-               // Valid selection
-               if (c >= '1' && c <= ('0' + inventoryCount))
-               {
-                   int index = c - '1';
-                   char *chosenItem = inventory[index];
-                   char *neededItem = requiredItem[currentRoom];
-
-                   if (strcmp(chosenItem, neededItem) == 0)
-                   {
-                       strcpy(selectedItem, chosenItem);
-
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"Correct item! Now solve the puzzle...\r\n\r\n",
-                           strlen("Correct item! Now solve the puzzle...\r\n\r\n"),
-                           10);
-
-                       if (difficulty == 1)
-                       {
-                           currentPuzzle = rand() % NUM_EASY_PUZZLES;
-                           timeLimit = 10000;
-                       }
-                       else
-                       {
-                           currentPuzzle = rand() % NUM_HARD_PUZZLES;
-                           timeLimit = 5000;
-                       }
-
-                       puzzleStartTime = HAL_GetTick();
-                       lastTimerPrint = 0;
-
-                       state = STATE_PUZZLE;
-                       printed = 0;
-                   }
-                   else
-                   {
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"Wrong item for this room! Try again.\r\n\r\n",
-                           strlen("Wrong item for this room! Try again.\r\n\r\n"),
-                           10);
-
-                       state = STATE_ACTION;
-                       printed = 0;
-                   }
-               }
-               else
-               {
-                   HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Invalid choice!\r\n\r\n",
-                       strlen("Invalid choice!\r\n\r\n"),
-                       10);
-
-                   printed = 0;
-               }
-           }break;
 
        case STATE_PUZZLE:
-    	   if (HAL_GetTick() - puzzleStartTime > timeLimit)
-    	   {
-    	       HAL_UART_Transmit(&huart2,
-    	           (uint8_t*)"Time's up! You lose!\r\n",
-    	           strlen("Time's up! You lose!\r\n"),
-    	           10);
-
-    	       state = STATE_GAME_OVER;
-    	       printed = 0;
-    	       break;
-    	   }
-
-
-    	   uint32_t now = HAL_GetTick();
-    	   uint32_t remaining = (timeLimit - (now - puzzleStartTime)) / 1000;
-
-    	   // print once per second
-    	   if (now - lastTimerPrint >= 1000)
-    	   {
-    	       char msg[50];
-    	       sprintf(msg, "Time left: %lu sec\r\n", remaining);
-
-    	       HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-
-    	       lastTimerPrint = now;
-    	   }
-
            if (!printed)
            {
-        	   char timerMsg[50];
-        	   sprintf(timerMsg, "You have %lu seconds!\r\n", timeLimit / 1000);
-        	   HAL_UART_Transmit(&huart2, (uint8_t*)timerMsg, strlen(timerMsg), 10);
-        	   HAL_UART_Transmit(&huart2,
-        	       (uint8_t*)"Press H to use hint (ONE TIME ONLY)\r\n\r\n",
-        	       strlen("Press H to use hint (ONE TIME ONLY)\r\n\r\n"),
-        	       10);
-
-        	   if (difficulty == 1)
-        	   {
-        	       HAL_UART_Transmit(&huart2,
-        	           (uint8_t*)easyQuestions[currentPuzzle],
-        	           strlen(easyQuestions[currentPuzzle]),
-        	           10);
-        	   }
-        	   else
-        	   {
-        	       HAL_UART_Transmit(&huart2,
-        	           (uint8_t*)hardQuestions[currentPuzzle],
-        	           strlen(hardQuestions[currentPuzzle]),
-        	           10);
-        	   }
+               HAL_UART_Transmit(&huart2,
+                   (uint8_t*)"Solve: What is 2+2?\r\n",
+                   strlen("Solve: What is 2+2?\r\n"),
+                   10);
                printed = 1;
            }
 
@@ -765,85 +249,29 @@ int main(void)
                char c = rx_buff[0];
                dataAvail = 0;
 
-               // convert to lowercase (optional but smart)
-               if (c >= 'A' && c <= 'Z')
-                   c = c + 32;
+               if (c < '0' || c > '9')
+                   break;
 
-               char correctAnswer;
-
-               // convert to lowercase
-               if (c >= 'A' && c <= 'Z')
-                   c += 32;
-
-               // 🔥 HINT SYSTEM
-               if (c == 'h')
+               if (c == '4')
                {
-                   if (hintNPCUsed)
-                   {
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"NPC: You already used your only hint!\r\n\r\n",
-                           strlen("NPC: You already used your only hint!\r\n\r\n"),
-                           10);
-                   }
-                   else
-                   {
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"\r\n[Mysterious Helper appears]\r\n",
-                           strlen("\r\n[Mysterious Helper appears]\r\n"),
-                           100);
-
-                       char *hint;
-
-                       if (difficulty == 1)
-                           hint = easyHints[currentPuzzle];
-                       else
-                           hint = hardHints[currentPuzzle];
-
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"Hint: ",
-                           strlen("Hint: "),
-                           100);
-
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)hint,
-                           strlen(hint),
-                           100);
-
-                       HAL_UART_Transmit(&huart2,
-                           (uint8_t*)"\r\n\r\n",
-                           4,
-                           100);
-
-                       hintNPCUsed = 1;  // 🔒 permanently used
-                   }
-
-                   break; // ⛔ IMPORTANT: don't process as answer
-               }
-
-               if (difficulty == 1)
-                   correctAnswer = easyAnswers[currentPuzzle];
-               else
-                   correctAnswer = hardAnswers[currentPuzzle];
-
-               if (c == correctAnswer)
-               {
-                   HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Correct! Room cleaned!\r\n\r\n",
-                       strlen("Correct! Room cleaned!\r\n\r\n"),
-                       10);
-
                    state = STATE_CLEAN;
                    printed = 0;
                }
                else
                {
                    HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Wrong!\r\n", strlen("Wrong!\r\n"), 10);
+                       (uint8_t*)"Wrong!\r\n",
+                       strlen("Wrong!\r\n"),
+                       10);
                }
            }
            break;
 
        case STATE_CLEAN:
+           HAL_UART_Transmit(&huart2,
+               (uint8_t*)"Room cleaned!\r\n\r\n",
+               strlen("Room cleaned!\r\n"),
+               10);
 
            if (roomsClean[currentRoom] == 0)
            {
@@ -857,78 +285,35 @@ int main(void)
 
        case STATE_COMPLETE:
            if (cleanedRooms >= 6)
-           {
-        	   HAL_UART_Transmit(&huart2, (uint8_t*)winBanner, strlen(winBanner), 100);
-
-
-
                state = STATE_GAME_OVER;
-           }
            else
-           {
                state = STATE_EXPLORE;
-           }
            break;
 
        case STATE_GAME_OVER:
+           HAL_UART_Transmit(&huart2,
+               (uint8_t*)"YOU WIN!\r\n",
+               strlen("YOU WIN!\r\n"),
+               10);
 
-           if (!printed)
-           {
-               HAL_UART_Transmit(&huart2,
-                   (uint8_t*)"\r\n=== GAME OVER ===\r\n",
-                   strlen("\r\n=== GAME OVER ===\r\n"),
-                   10);
-
-               HAL_UART_Transmit(&huart2,
-                   (uint8_t*)"Press P to play again\r\nPress Q to quit\r\n\r\n",
-                   strlen("Press P to play again\r\nPress Q to quit\r\n\r\n"),
-                   10);
-
-               printed = 1;
-           }
-
-           if (dataAvail)
-           {
-               char c = rx_buff[0];
-               dataAvail = 0;
-
-               if (c >= 'A' && c <= 'Z')
-                   c += 32;
-
-               if (c == 'p')
-               {
-                   resetGame();   // 🔁 restart everything
-               }
-               else if (c == 'q')
-               {
-                   HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Goodbye!\r\n",
-                       strlen("Goodbye!\r\n"),
-                       10);
-
-                   while (1); // stop program
-               }
-           }
+           while (1);
            break;
        }
 
        HAL_UART_Receive_IT(&huart2, rx_buff, 1);
    }
 
+ /* Game engine END WHILE */
 
-  /* Game engine END WHILE */
-
-   // Game over
-   while(1);
+  // Game over
+  HAL_UART_Transmit(&huart2,Goodbye,sizeof(Goodbye),10);
+  while(1);
 }
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
-
-
-
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -1068,137 +453,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   HAL_UART_Receive_IT(&huart2, rx_buff, 1); //You need to toggle a breakpoint on this line!
   dataAvail=1;
-}
-
-/* USER CODE BEGIN 4 */
-
-void printMap(void)
-{
-    char msg[200];
-
-    HAL_UART_Transmit(&huart2,
-        (uint8_t*)"====== MAP ======\r\n",
-        strlen("====== MAP ======\r\n"),
-        100);
-
-    // Player position
-    sprintf(msg, "@ YOU → %s\r\n\r\n", roomName[currentRoom]);
-    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-
-    for (int i = 0; i < 6; i++)
-    {
-        sprintf(msg, "%s", roomName[i]);
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-
-        if (i == currentRoom)
-        {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" [@]", 6, 100);
-        }
-
-        if (roomItemCount[i] > 0)
-        {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" [", 2, 100);
-
-            int first = 1;
-
-            for (int j = 0; j < 3; j++)
-            {
-                if (strlen(roomItems[i][j]) > 0)
-                {
-                    if (!first)
-                        HAL_UART_Transmit(&huart2, (uint8_t*)" ", 1, 100);
-
-                    HAL_UART_Transmit(&huart2,
-                        (uint8_t*)roomItems[i][j],
-                        strlen(roomItems[i][j]),
-                        100);
-
-                    HAL_UART_Transmit(&huart2, (uint8_t*)"*", 1, 100);
-
-                    first = 0;
-                }
-            }
-
-            HAL_UART_Transmit(&huart2, (uint8_t*)"]", 1, 100);
-        }
-        else
-        {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" []", 3, 100);
-        }
-
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 100);
-    }
-
-    HAL_UART_Transmit(&huart2,
-        (uint8_t*)"\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n",
-        strlen("\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n"),
-        100);
-}
-
-void showInventory(void)
-{
-    HAL_UART_Transmit(&huart2,
-        (uint8_t*)"=== INVENTORY ===\r\n",
-        strlen("=== INVENTORY ===\r\n"),
-        10);
-
-    if (inventoryCount == 0)
-    {
-        HAL_UART_Transmit(&huart2,
-            (uint8_t*)"Empty!\r\n\r\n",
-            strlen("Empty!\r\n\r\n"),
-            10);
-        return;
-    }
-
-    for (int i = 0; i < inventoryCount; i++)
-    {
-        HAL_UART_Transmit(&huart2,
-            (uint8_t*)inventory[i],
-            strlen(inventory[i]),
-            10);
-
-        HAL_UART_Transmit(&huart2,
-            (uint8_t*)"\r\n",
-            2,
-            10);
-    }
-
-    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 10);
-}
-
-void resetGame(void)
-{
-    inventoryCount = 0;
-    cleanedRooms = 0;
-    currentRoom = 0;
-
-    for (int i = 0; i < 6; i++)
-    {
-        roomsClean[i] = 0;
-    }
-
-    // (optional) reset items if needed
-
-    state = STATE_MENU;
-    printed = 0;
-}
-
-/* USER CODE END 4 */
-
-void printItemArt(char *itemName)
-{
-    for (int i = 0; i < 7; i++)
-    {
-        if (strcmp(items[i].name, itemName) == 0)
-        {
-            HAL_UART_Transmit(&huart2,
-                (uint8_t*)items[i].art,
-                strlen(items[i].art),
-                100);
-            return;
-        }
-    }
 }
 /* USER CODE END 4 */
 
