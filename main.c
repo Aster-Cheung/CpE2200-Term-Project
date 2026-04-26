@@ -111,7 +111,7 @@ char *hardQuestions[NUM_HARD_PUZZLES] = {
 };
 
 char hardAnswers[NUM_HARD_PUZZLES] = {
-    '3',   // 36 → last digit trick (or accept '3' for simplicity)
+    '3',   
     'l',
     '8',
     'a',
@@ -330,7 +330,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  srand(HAL_GetTick());
+  srand(HAL_GetTick()); // timer
 
   /* USER CODE BEGIN Init */
 
@@ -791,9 +791,9 @@ int main(void)
     	   if (now - lastTimerPrint >= 1000)
     	   {
     	       char msg[50];
-    	       sprintf(msg, "Time left: %lu sec\r\n", remaining);
-
+    	       sprintf(msg, "\rTime left: %lu sec   ", remaining);
     	       HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
+
 
     	       lastTimerPrint = now;
     	   }
@@ -830,7 +830,7 @@ int main(void)
                char c = rx_buff[0];
                dataAvail = 0;
 
-               // convert to lowercase (optional but smart)
+               // convert to lowercase
                if (c >= 'A' && c <= 'Z')
                    c = c + 32;
 
@@ -892,7 +892,7 @@ int main(void)
                if (c == correctAnswer)
                {
                    HAL_UART_Transmit(&huart2,
-                       (uint8_t*)"Correct! Room cleaned!\r\n\r\n",
+                       (uint8_t*)"\r\nCorrect! Room cleaned!\r\n\r\n",
                        strlen("Correct! Room cleaned!\r\n\r\n"),
                        10);
 
