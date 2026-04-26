@@ -4,7 +4,7 @@
 .thumb
 .section .text
 .align
-.global addPoint:
+.global addPoint
 
 addPoint:
     LDR R0, =playerScore   // load address of score
