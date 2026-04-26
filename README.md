@@ -19,12 +19,11 @@ Scenarios:
 ## Screenshots
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/74de9f60-7bf5-4258-9ff8-09c058dbc825" />
 
-
-
 ## Flow Chart
 - Rectangular: shows a process that the player will experience
 - Dimond: Shows the choices that the player can choose and decide
-<img width="1870" height="1100" alt="image" src="https://github.com/user-attachments/assets/3082cb66-fb2b-411f-a743-f5d45ba22d86" />
+<img width="761" height="1100" alt="image" src="https://github.com/user-attachments/assets/4b314edf-0940-4aae-b605-4a28af705889" />
+
 
 ## State Diagram
 - The game uses states to control the flow of the game
