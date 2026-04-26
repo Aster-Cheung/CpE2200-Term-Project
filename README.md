@@ -42,6 +42,9 @@ Scenarios:
 
 ### Addresses
 - Change how a single key press is interpreted
+- In the code, put \r → go back to start of line no \n → don’t go to a new line
+- - Example: Before, “Time left: %lu sec\r\n”, after “\rTime left: %lu sec”
+
 
 
 ## Conclusions
