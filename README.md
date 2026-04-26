@@ -8,8 +8,8 @@
 - Handle real-time user input via UART communication Design interactive gameplay with puzzles, inventory, and room exploration
 
 ## Motivation
-- Practice completing in-game chores under time pressure 
-= Develop habits that help reduce procrastination in real life tasks 
+- Practice completing in-game chores under time pressure
+- Develop habits that help reduce procrastination in real life tasks 
 
 ## Demonstrations
 - Software: STEM 32 System Work Bench and PUTTY
