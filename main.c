@@ -60,6 +60,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_DMA_Init(void);
+extern void addPoint(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -264,7 +265,8 @@ uint8_t currentPuzzle = 0;
    uint32_t timeLimit = 0;
    uint32_t lastTimerPrint = 0;
    uint8_t Goodbye[] = "See you later! You can restart the game by pressing the reset button. \r\n"; //Data to send
-
+   volatile int score = 0;
+   extern volatile int score;
 
 
    uint8_t roomItemCount[6] = {
@@ -280,6 +282,18 @@ uint8_t currentPuzzle = 0;
    "  ╚██╔╝  ██║   ██║██║   ██║    ██║███╗██║██║██║╚██╗██║╚═╝╚═╝\r\n"
    "   ██║   ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║██╗██╗\r\n"
    "   ╚═╝    ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═╝╚═╝\r\n";
+
+   char loseBanner[] =
+   "          _______             _        _______  _______  _______  _  _ \r\n"
+   "|\\     /|(  ___  )|\\     /|  ( \\      (  ___  )(  ____ \\(  ____ \\( )( )\r\n"
+   "( \\   / )| (   ) || )   ( |  | (      | (   ) || (    \\/| (    \\/| || |\r\n"
+   " \\ (_) / | |   | || |   | |  | |      | |   | || (_____ | (__    | || |\r\n"
+   "  \\   /  | |   | || |   | |  | |      | |   | |(_____  )|  __)   | || |\r\n"
+   "   ) (   | |   | || |   | |  | |      | |   | |      ) || (      (_)(_)\r\n"
+   "   | |   | (___) || (___) |  | (____/\\| (___) |/\\____) || (____/\\ _  _ \r\n"
+   "   \\_/   (_______)(_______)  (_______/(_______)\\_______)(_______/(_)(_)\r\n";
+
+
 
    /* STATES */
    typedef enum {
@@ -759,9 +773,10 @@ int main(void)
     	   if (HAL_GetTick() - puzzleStartTime > timeLimit)
     	   {
     	       HAL_UART_Transmit(&huart2,
-    	           (uint8_t*)"Time's up! You lose!\r\n",
-    	           strlen("Time's up! You lose!\r\n"),
+    	           (uint8_t*)"Time's up!\r\n",
+    	           strlen("Time's up!\r\n"),
     	           10);
+    	       HAL_UART_Transmit(&huart2, (uint8_t*)loseBanner, strlen(loseBanner), 100);
 
     	       state = STATE_GAME_OVER;
     	       printed = 0;
@@ -825,7 +840,6 @@ int main(void)
                if (c >= 'A' && c <= 'Z')
                    c += 32;
 
-               // 🔥 HINT SYSTEM
                if (c == 'h')
                {
                    if (hintNPCUsed)
@@ -882,6 +896,8 @@ int main(void)
                        strlen("Correct! Room cleaned!\r\n\r\n"),
                        10);
 
+                   addPoint();
+
                    state = STATE_CLEAN;
                    printed = 0;
                }
@@ -928,6 +944,9 @@ int main(void)
                    (uint8_t*)"\r\n=== GAME OVER ===\r\n",
                    strlen("\r\n=== GAME OVER ===\r\n"),
                    10);
+               char msg[50];
+               sprintf(msg, "Score: %d\r\n", score);
+               HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
 
                HAL_UART_Transmit(&huart2,
                    (uint8_t*)"Press P to play again\r\nPress Q to quit\r\n\r\n",
@@ -1109,6 +1128,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 /* If UART2 has received a byte from the user terminal this function
  * will be called.
  * dataAvail is used to indicate that the rx_buff has received new data and can be checked.
@@ -1145,62 +1165,61 @@ void printMap(void)
 {
     char msg[200];
 
+    const int BOX_WIDTH = 24;
+
     HAL_UART_Transmit(&huart2,
-        (uint8_t*)"====== MAP ======\r\n",
-        strlen("====== MAP ======\r\n"),
+        (uint8_t*)"====== MAP ======\r\n\r\n",
+        strlen("====== MAP ======\r\n\r\n"),
         100);
 
-    // Player position
-    sprintf(msg, "@ YOU → %s\r\n\r\n", roomName[currentRoom]);
+    sprintf(msg, "YOU ARE IN: %s\r\n\r\n", roomName[currentRoom]);
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
 
     for (int i = 0; i < 6; i++)
     {
-        sprintf(msg, "%s", roomName[i]);
+        // Top border
+        HAL_UART_Transmit(&huart2,
+            (uint8_t*)"+------------------------+\r\n",
+            strlen("+------------------------+\r\n"),
+            100);
+
+        // Room name line
+        if (i == currentRoom)
+            sprintf(msg, "    %s @\r\n", roomName[i]);
+        else
+            sprintf(msg, "    %s\r\n", roomName[i]);
+
         HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
 
-        if (i == currentRoom)
+        // Items
+        int hasItems = 0;
+
+        for (int j = 0; j < 3; j++)
         {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" [@]", 6, 100);
-        }
-
-        if (roomItemCount[i] > 0)
-        {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" [", 2, 100);
-
-            int first = 1;
-
-            for (int j = 0; j < 3; j++)
+            if (strlen(roomItems[i][j]) > 0)
             {
-                if (strlen(roomItems[i][j]) > 0)
-                {
-                    if (!first)
-                        HAL_UART_Transmit(&huart2, (uint8_t*)" ", 1, 100);
-
-                    HAL_UART_Transmit(&huart2,
-                        (uint8_t*)roomItems[i][j],
-                        strlen(roomItems[i][j]),
-                        100);
-
-                    HAL_UART_Transmit(&huart2, (uint8_t*)"*", 1, 100);
-
-                    first = 0;
-                }
+            	sprintf(msg, "    %s\r\n", roomItems[i][j]);
+                HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+                hasItems = 1;
             }
-
-            HAL_UART_Transmit(&huart2, (uint8_t*)"]", 1, 100);
         }
-        else
+
+        // Empty room case
+        if (!hasItems)
         {
-            HAL_UART_Transmit(&huart2, (uint8_t*)" []", 3, 100);
+        	sprintf(msg, "    %s\r\n", "(empty)");
+            HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
         }
-
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 100);
     }
 
     HAL_UART_Transmit(&huart2,
-        (uint8_t*)"\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n",
-        strlen("\r\nLEGEND:\r\n@ = Player\r\n* = Item\r\n=================\r\n\r\n"),
+        (uint8_t*)"+------------------------+\r\n\r\n",
+        strlen("+------------------------+\r\n\r\n"),
+        100);
+
+    HAL_UART_Transmit(&huart2,
+        (uint8_t*)"LEGEND:\r\n@ = Player\r\n=================\r\n\r\n",
+        strlen("LEGEND:\r\n@ = Player\r\n=================\r\n\r\n"),
         100);
 }
 
@@ -1250,27 +1269,32 @@ void resetGame(void)
     lastTimerPrint = 0;
 
     printed = 0;
+
+    // reset player name
     nameEntered = 0;
     nameIndex = 0;
     memset(playerName, 0, sizeof(playerName));
 
-    // reset rooms cleaned
-    for (int i = 0; i < 6; i++)
-    {
-        roomsClean[i] = 0;
-        roomItemCount[i] = 0;
-    }
+    // reset score
+    score = 0;
 
     // restore room items
     memcpy(roomItems, roomItemsInit, sizeof(roomItemsInit));
-    roomItemCount[0] = 0;
-       roomItemCount[1] = 1;
-       roomItemCount[2] = 2;
-       roomItemCount[3] = 1;
-       roomItemCount[4] = 3;
-       roomItemCount[5] = 0;
 
-    // clear inventory strings
+    // reset rooms + recompute counts
+    for (int i = 0; i < 6; i++)
+    {
+        roomsClean[i] = 0;
+
+        roomItemCount[i] = 0;
+        for (int j = 0; j < 3; j++)
+        {
+            if (roomItems[i][j][0] != '\0')
+                roomItemCount[i]++;
+        }
+    }
+
+    // clear inventory
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
         inventory[i][0] = '\0';
@@ -1278,7 +1302,6 @@ void resetGame(void)
 
     state = STATE_MAIN_MENU;
 }
-
 /* USER CODE END 4 */
 
 void printItemArt(char *itemName)
