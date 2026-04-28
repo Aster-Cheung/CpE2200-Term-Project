@@ -22,15 +22,13 @@ Scenarios:
 ## Flow Chart
 - Rectangular: shows a process that the player will experience
 - Dimond: Shows the choices that the player can choose and decide
-<img width="1936" height="532" alt="image" src="https://github.com/user-attachments/assets/446d4ddc-f0f7-4fd8-bb24-7bf386f82663" />
-
+<img width="761" height="1100" alt="image" src="https://github.com/user-attachments/assets/fc760c4e-1ba1-4184-83ba-dce6f4537faa" />
 
 
 ## State Diagram
 - The game uses states to control the flow of the game
 - Arrows show transitions based on player input
 <img width="2742" height="1735" alt="Updated State Diagram Milestone 4 (2)" src="https://github.com/user-attachments/assets/84cb6d38-774f-4565-964a-291ea89eb136" />
-
 
 ## Discussions
 ### Limitations
