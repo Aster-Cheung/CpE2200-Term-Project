@@ -111,7 +111,7 @@ char *hardQuestions[NUM_HARD_PUZZLES] = {
 };
 
 char hardAnswers[NUM_HARD_PUZZLES] = {
-    '3',   
+    '3',   // 36 → last digit trick (or accept '3' for simplicity)
     'l',
     '8',
     'a',
@@ -330,7 +330,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  srand(HAL_GetTick()); // timer
+  srand(HAL_GetTick());
 
   /* USER CODE BEGIN Init */
 
