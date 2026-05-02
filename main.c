@@ -24,7 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <string.h>
-#include <stdio.h>  // for sprintf
+#include <stdio.h> 
 
 
 /* Private includes ----------------------------------------------------------*/
@@ -60,7 +60,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_DMA_Init(void);
-extern void addPoint(void);
+extern void addPoint(void); //connects to Assembly external file
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -68,15 +68,15 @@ extern void addPoint(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 volatile uint8_t dataAvail = 0;
-char rx_buff[8];
+char rx_buff[8]; //Allocating 8 bytes, but not initializing them.
 
 //store name
- char playerName[20] = {0};
- uint8_t nameIndex = 0;
+ char playerName[20] = {0}; // max 20 characters, currently all slots were set to 0
+ uint8_t nameIndex = 0; // unsigned integer 8 bit and type stdint.h
  uint8_t nameEntered = 0;
 
-#define NUM_EASY_PUZZLES 5
-#define NUM_HARD_PUZZLES 5
+#define NUM_EASY_PUZZLES 5 // number of easy puzzles
+#define NUM_HARD_PUZZLES 5 // number of hard puzzles
 
 char *easyQuestions[NUM_EASY_PUZZLES] = {
     "What letter comes after C?\r\n",
@@ -111,7 +111,7 @@ char *hardQuestions[NUM_HARD_PUZZLES] = {
 };
 
 char hardAnswers[NUM_HARD_PUZZLES] = {
-    '3',   // 36 → last digit trick (or accept '3' for simplicity)
+    '3',   
     'l',
     '8',
     'a',
@@ -135,7 +135,7 @@ char *roomMess[6] = {
     "Trash is scattered all over the hallway."
 };
 
-uint8_t currentPuzzle = 0;
+uint8_t currentPuzzle = 0; // initialize currentPuzzle to 0
 
 #define INVENTORY_SIZE 10
    char inventory[INVENTORY_SIZE][20];
@@ -255,8 +255,8 @@ uint8_t currentPuzzle = 0;
 
 
 #define HINT_TIME_MS 3000
-   uint8_t hintGiven = 0;
    /* GAME VARIABLES */
+   uint8_t hintGiven = 0;
    uint8_t difficulty = 0;
    uint8_t currentRoom = 0;
    uint8_t cleanedRooms = 0;
@@ -330,7 +330,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  srand(HAL_GetTick());
+  srand(HAL_GetTick()); // get a random number through the generator to pick questions
 
   /* USER CODE BEGIN Init */
 
@@ -361,7 +361,7 @@ int main(void)
        switch (state)
        {
        case STATE_MAIN_MENU:
-           if (!printed)
+           if (!printed) // print once to avoid reprinting
            {
                char msg[] =
                    "===== MAIN MENU =====\r\n"
@@ -372,14 +372,14 @@ int main(void)
                printed = 1;
            }
 
-           if (dataAvail)
+           if (dataAvail) // if an input has detected
            {
-               char c = rx_buff[0];
+               char c = rx_buff[0]; // c = whatever key it is pressed
                dataAvail = 0;
 
                if (c == '1')
                {
-                   state = STATE_MENU; // difficulty
+                   state = STATE_MENU; // sub menu difficulty
                    printed = 0;
                }
                else if (c == '2')
@@ -394,7 +394,7 @@ int main(void)
            break;
 
        case STATE_MENU:
-           if (!printed)
+           if (!printed) // if not printed
            {
                char msg[] = "Select difficulty:\r\n1. Easy\r\n2. Hard\r\n\r\n";
                HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
@@ -410,11 +410,11 @@ int main(void)
                {
             	   // Ask for the player's name
 
-				   difficulty = c - '0';
+				   difficulty = c - '0'; // sends the ASCII value of that character, not the actual number.
 
 				   nameIndex = 0;
 				   nameEntered = 0;
-				   memset(playerName, 0, sizeof(playerName));
+				   memset(playerName, 0, sizeof(playerName)); //memory set
 
 				   HAL_UART_Transmit(&huart2,
 					   (uint8_t*)"Enter your name and press ENTER:\r\n",
@@ -445,7 +445,7 @@ int main(void)
 
                char msg[] = "Let's Start, good luck!\r\n\r\n";
 				HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
-				HAL_Delay(1000);
+				HAL_Delay(1000); // Timer delay for a second
 
 				char msg3[] = "3....\r\n\r\n";
 				HAL_UART_Transmit(&huart2, (uint8_t*)msg3, strlen(msg3), 10);
@@ -459,7 +459,7 @@ int main(void)
 				HAL_UART_Transmit(&huart2, (uint8_t*)msg1, strlen(msg1), 10);
 				HAL_Delay(1000);
 
-				 state = STATE_EXPLORE;
+				 state = STATE_EXPLORE; // Go to choose room menu
 				 printed = 0;
            }
            break;
@@ -509,13 +509,13 @@ int main(void)
 
            if (!printed)
            {
-        	   char msg[200];
+        	   char msg[200];  //hold up to 200 characters
 
         	   HAL_UART_Transmit(&huart2, (uint8_t*)playerName, strlen(playerName), 10);
         	   sprintf(msg,
         	       ", You entered the %s...\r\n%s\r\n\r\n",
-        	       roomName[currentRoom],
-        	       roomMess[currentRoom]);
+        	       roomName[currentRoom], // get the matching room name that represents the current room
+        	       roomMess[currentRoom]); // get matching room mess in the roomMess list
 
         	   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
                printed = 1;
@@ -528,13 +528,13 @@ int main(void)
                    strlen("This room is already cleaned! Nothing more to do here. \r\nAre you obsessed with cleaning rooms?\r\n\r\n"),
                    10);
 
-               state = STATE_ACTION;   // skip puzzle
+               state = STATE_ACTION;   // provides action menu
                printed = 0;
            }
            else
            {
                if (difficulty == 1)
-                   currentPuzzle = rand() % NUM_EASY_PUZZLES;
+                   currentPuzzle = rand() % NUM_EASY_PUZZLES; // randomly picking a question using ran()
                else
                    currentPuzzle = rand() % NUM_HARD_PUZZLES;
 
@@ -550,6 +550,7 @@ int main(void)
 
     		   HAL_UART_Transmit(&huart2, (uint8_t*)playerName, strlen(playerName), 10);
 
+    		   // sprintf format string
     		   sprintf(msg,
     		       ", You are in %s\r\n"
     		       "1. Grab item\r\n"
@@ -571,6 +572,8 @@ int main(void)
     	       if (c == '1')
     	       {
     	           printed = 0;
+    	           
+    	           // update inventory, press once and update the inventory list
 
     	           if (roomItemCount[currentRoom] > 0)
     	           {
@@ -589,7 +592,7 @@ int main(void)
     	                       HAL_UART_Transmit(&huart2,
     	                           (uint8_t*)"Item grabbed: \r\n",
     	                           strlen("Item grabbed: \r\n"),
-    	                           10);
+    	                           10); //how many bytes to send
 
     	                       HAL_UART_Transmit(&huart2,
     	                           (uint8_t*)item,
@@ -629,7 +632,7 @@ int main(void)
     	       }
     	       else if (c == '2')
     	       {
-    	           if (roomsClean[currentRoom] == 1)
+    	           if (roomsClean[currentRoom] == 1) // room has been cleaned already
     	           {
     	               HAL_UART_Transmit(&huart2,
     	                   (uint8_t*)"This room is already cleaned!\r\n\r\n",
@@ -640,15 +643,15 @@ int main(void)
     	               break;
     	           }
 
-    	           // normal flow
+    	           // puzzles in terms of difficulty
     	           if (difficulty == 1)
     	               currentPuzzle = rand() % NUM_EASY_PUZZLES;
     	           else
     	               currentPuzzle = rand() % NUM_HARD_PUZZLES;
 
-    	           timeLimit = (difficulty == 1) ? 10000 : 5000;
+    	           timeLimit = (difficulty == 1) ? 10000 : 5000; // set timer to 10s, otherwise 5s
 
-    	           puzzleStartTime = HAL_GetTick();
+    	           puzzleStartTime = HAL_GetTick(); // timer function
     	           lastTimerPrint = 0;
 
     	           state = STATE_USE_ITEM;
@@ -673,7 +676,7 @@ int main(void)
            {
                showInventory();
 
-               if (inventoryCount == 0)
+               if (inventoryCount == 0) // inventory empty
                {
                    HAL_UART_Transmit(&huart2,
                        (uint8_t*)"No items to use!\r\n\r\n",
@@ -714,7 +717,7 @@ int main(void)
                    break;
                }
 
-               // Valid selection
+               // Correct selection
                if (c >= '1' && c <= ('0' + inventoryCount))
                {
                    int index = c - '1';
@@ -787,11 +790,11 @@ int main(void)
     	   uint32_t now = HAL_GetTick();
     	   uint32_t remaining = (timeLimit - (now - puzzleStartTime)) / 1000;
 
-    	   // print once per second
+    	   // check if 1s has passed since the last print timer
     	   if (now - lastTimerPrint >= 1000)
     	   {
     	       char msg[50];
-    	       sprintf(msg, "\rTime left: %lu sec   ", remaining);
+    	       sprintf(msg, "\rTime left: %lu sec   ", remaining); // overwrites the same line using \r
     	       HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 10);
 
 
@@ -842,6 +845,7 @@ int main(void)
 
                if (c == 'h')
                {
+            	   // NPC providing hint
                    if (hintNPCUsed)
                    {
                        HAL_UART_Transmit(&huart2,
@@ -961,6 +965,7 @@ int main(void)
                char c = rx_buff[0];
                dataAvail = 0;
 
+               // convert to lower case
                if (c >= 'A' && c <= 'Z')
                    c += 32;
 
