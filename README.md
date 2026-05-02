@@ -29,7 +29,8 @@ Scenarios:
 ## State Diagram
 - The game uses states to control the flow of the game
 - Arrows show transitions based on player input
-<img width="2742" height="1735" alt="Updated State Diagram Milestone 4 (2)" src="https://github.com/user-attachments/assets/84cb6d38-774f-4565-964a-291ea89eb136" />
+<img width="1125" height="662" alt="image" src="https://github.com/user-attachments/assets/40c4d040-9981-40b1-be25-b795d0960500" />
+
 
 ## Discussions
 ### Limitations
